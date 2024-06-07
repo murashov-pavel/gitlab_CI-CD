@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: $CI_REGISTRY/lesson_users/kubernetes/image_ub:${TAG}
+    ports:
+      - 8080:80
+    environment:
+      VARIABLE: ${TAG}

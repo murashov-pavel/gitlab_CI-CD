@@ -1,0 +1,18 @@
+repository: gitlabserver.com:5050/lesson_users/kubernetes
+tag: kuber
+applicationName: nginx
+image_pull_secret_name: regcred
+replicas: 1
+port: 80
+container_port: 9376
+nodePort: 30007
+volumeMounts:
+  - name: certs
+    mountPath: /etc/ssl/certs/
+    readOnly: false
+volumes:
+  - name: gitlabsecret
+    secret:
+      secretName: gitlabsecretgeneric
+  - name: certs
+    emptyDir: {}

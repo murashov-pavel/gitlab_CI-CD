@@ -1,0 +1,18 @@
+stages:
+  - helm-publish1
+helm-publish:
+  stage: helm-publish1
+  tags: 
+    - kuber
+  image:
+    name: alpine/helm:latest
+    entrypoint: [""]
+  before_script: 
+    - echo "$TLSCRT" >> /etc/ssl/certs/ca-certificates.crt
+    - echo "192.168.10.10 gitlabserver.com" >> /etc/hosts
+    - mkdir -p /root/.docker
+    - echo "$AUTH" | base64 -d > /root/.docker/config.json
+  script:
+    - helm repo add --username root --password ${helm_t} myhelm ${CI_API_V4_URL}/projects/4/packages/helm/stable
+    - helm package myhelm
+    - 'curl --request POST --user user:${helm_t} --form "chart=@myhelm-0.2.0.tgz" "${CI_API_V4_URL}/projects/4/packages/helm/api/stable/charts"'

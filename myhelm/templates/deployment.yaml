@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "myhelm.fullname" . }}-deployment
+  labels: 
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  template:
+    metadata:
+      labels:
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.image_pull_secret_name }}
+      initContainers:
+        - name: add-certificate
+          image: busybox
+          command: ['sh', '-c', 'cat /certs/gitlabserver.com.crt >> /etc/ssl/certs/ca-certificates.crt']
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/ssl/certs
+            - name: gitlabsecret
+              mountPath: /certs
+      containers:
+        - name: {{ .Values.applicationName }}
+          image: "{{ .Values.repository }}:{{ .Values.tag }}"
+          ports:
+          - containerPort: {{ .Values.container_port }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}     
+      volumes: 
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

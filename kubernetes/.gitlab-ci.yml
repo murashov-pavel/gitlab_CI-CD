@@ -1,0 +1,48 @@
+stages:
+  - build
+  - deploy
+job_build:
+  stage: build
+  tags:
+    - kuber
+  image: 
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /root/.docker
+    - echo "$AUTH" | base64 -d > /root/.docker/config.json
+    - mkdir -p /kaniko/.docker
+    - echo "$AUTH" | base64 -d > /kaniko/.docker/config.json
+    - echo "$TLSCRT" >> /kaniko/ssl/certs/ca-certificates.crt
+    - echo "192.168.10.10 gitlabserver.com" >> /etc/hosts
+  script:
+    - /kaniko/executor
+      --context .
+      --dockerfile Dockerfile
+      --destination gitlabserver.com:5050/lesson_users/kubernetes:kuber
+  when: manual
+
+job_deploy:
+  stage: deploy
+  tags:
+    - kuber
+  variables:
+    CHART: myhelm
+  image: 
+    name: dtzar/helm-kubectl:3.13
+  before_script: 
+    - echo "$TLSCRT" >> /etc/ssl/certs/ca-certificates.crt
+    - echo "192.168.10.10 gitlabserver.com" >> /etc/hosts
+    - mkdir -p /root/.docker
+    - echo "$AUTH" | base64 -d > /root/.docker/config.json
+  script:
+    - echo "$TLSCRT" > tls.crt
+    - echo "$TLSKEY" > tls.key
+    - kubectl delete secret kubertls --ignore-not-found
+    - kubectl create secret tls kubertls --cert=tls.crt --key=tls.key
+    - helm repo add --username root --password ${helm_t} $CHART ${CI_API_V4_URL}/projects/4/packages/helm/stable
+    - helm upgrade -i myhelm-0.2.0.tgz myhelm/myhelm
+
+
+
+

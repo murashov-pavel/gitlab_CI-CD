@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.applicationName }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.container_port }}
+      nodePort: {{ .Values.nodePort }}
+  selector:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
